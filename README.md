@@ -17,3 +17,5 @@ General framework to run:
 -------- mean_centering.m, start_end_disp.m, and rest_lengths.m are helper functions for pca_k_means.m
 
 2. Run syn_duty_cycle_format to plot the synthetic duty cycles and format/save them for later use in experimental test protocols.
+
+-- Requires City 1 and City 2 drive cycle data as City_1_CellPowerProfile.csv and City_2_CellPowerProfile.csv
