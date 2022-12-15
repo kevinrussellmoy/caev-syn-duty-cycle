@@ -25,7 +25,7 @@ function [char_disp, char_state, char_aux, char_interval] = pca_k_means(metrics,
     metrics_normalized = metrics./(max(abs(metrics)));
     
     % PCA on normalized metrics matrix
-    [coeff,score,latent,tsquared,explained,mu] = pca(metrics_normalized, 'Centered', 'on');
+    [coeff,~,~,~,explained,~] = pca(metrics_normalized, 'Centered', 'on');
     
     % Determine number of principal components to use
     % (minimum number needed to explain 90% of variance)
@@ -103,14 +103,6 @@ function [char_disp, char_state, char_aux, char_interval] = pca_k_means(metrics,
 
 %% Plot figures (if showplots is true)
     if showplots
-%         hFig = figure();
-%         set(hFig, 'Position', [100 100 600 600])
-%         h = heatmap(string(1:size(metrics,2)), string(datestr(disp_daily_nz_days,6)), metrics_normalized, 'ColorMap', parula, ...
-%         'XLabel', 'Metric', 'YLabel', 'Date');
-%         set(gca,'FontSize', 26)
-%         idx = find(~(day(disp_daily_nz_days)==1));
-%         h.YDisplayLabels(idx) = {''};
-%     %     h.Colormap = gray;
     
         hFig = figure();
         set(hFig, 'Position', [100 100 600 800])
@@ -141,21 +133,11 @@ function [char_disp, char_state, char_aux, char_interval] = pca_k_means(metrics,
         ylim([min(cumsum(explained)/100) 1])
         xlim([1, length(explained)])
         box on
-        
-%         hFig = figure();
-%         set(hFig, 'Position', [100 100 600 600])
-%         h = heatmap(string(1:size(reconst_daily,2)), string(datestr(disp_daily_nz_days,6)), reconst_daily, 'ColorMap', parula, ...
-%         'XLabel', 'Principal Component', 'YLabel', 'Date');
-%     %     h.Colormap = gray;
-%         set(gca,'FontSize', 26)
-%         idx = find(~(day(disp_daily_nz_days)==1));
-%         h.YDisplayLabels(idx) = {''};
-
+       
         hFig = figure();
         set(hFig, 'Position', [100 100 600 600])
         h = heatmap(reconst_daily, 'ColorMap', parula, ...
         'XLabel', 'Principal Component', 'YLabel', 'Interval');
-    %     h.Colormap = gray;
         set(gca,'FontSize', 26)
         
         C = cov(metrics_normalized, 'omitrows');
@@ -166,14 +148,12 @@ function [char_disp, char_state, char_aux, char_interval] = pca_k_means(metrics,
         set(hFig, 'Position', [100 100 600 600])
         h = heatmap(reduce, 'ColorMap', parula, ...
         'XLabel', 'Principal Component', 'YLabel', 'Metric', 'CellLabelColor','none');
-    %     h.Colormap = gray;
         set(gca,'FontSize', 26)
 
         hFig = figure();
         set(hFig, 'Position', [100 100 600 200])
         h = heatmap(string(1:size(reconst_daily,2)), string(1:num_clust), clusters, 'ColorMap', parula, ...
             'XLabel', 'Principal Component', 'YLabel', 'Cluster', 'CellLabelColor','none');
-        %     h.Colormap = gray;
         set(gca,'FontSize', 26)
 
         hFig = figure();
@@ -181,12 +161,12 @@ function [char_disp, char_state, char_aux, char_interval] = pca_k_means(metrics,
         hold on
         plot(2:maxk,k_metric, 'color', rgb('magenta'), 'LineWidth', 2)
         set(gca,'FontSize', 26)
-        % title('Min distance - Max spread clusters')
         xlabel('Cluster Number, k')
         ylabel('$dist_{between}(k) - dist_{within}(k)$, [-]')
         ylim([0 max(k_metric)])
         box on
         hold off
+
         % Plot idx for non-zero dispatch days
         hFig = figure(21);
         set(hFig, 'Position', [100 100 600 500])

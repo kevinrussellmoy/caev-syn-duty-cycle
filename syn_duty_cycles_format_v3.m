@@ -7,63 +7,57 @@ close all
 clc
 set(0,'defaultTextInterpreter','latex');
 
-sf_dat = readtable("Confidential - Not subject to FOIA - 202201_Urban_CellPowerProfile.csv");
-lv_dat = readtable("Confidential - Not subject to FOIA - 202201_Las Vegas Urban+_CellPowerProfile.csv");
-Q_nom = 5; % Ah... from Zoox slides??
-freq = 10; % Hz
+% ----- Load in Drive Cycle data -----
+% Will be removed once public -- will not publish confidential data
+city_1_dat = readtable("City_1_CellPowerProfile.csv");
+city_2_dat = readtable("City_2_CellPowerProfile.csv");
+Q_nom = 5; % Ah, assumed
+freq = 1; % Hz
 
-% Assume current from front pack
-sf_curr = sf_dat.FrontCurrent_A_/Q_nom;
-lv_curr = lv_dat.FrontCurrent_A_/Q_nom;
+% Cell current
+city_1_curr = downsample(city_1_dat.FrontCurrent_A_, 10);
+city_2_curr = downsample(city_2_dat.FrontCurrent_A_, 10);
 
-% Get velocity
-sf_vel = sf_dat.Velocity_m_s_;
-lv_vel = lv_dat.Velocity_m_s_;
-%% Load all characteristic duty cycles
+% Vehicle velocity
+city_1_vel = downsample(city_1_dat.Velocity_m_s_, 10);
+city_2_vel = downsample(city_2_dat.Velocity_m_s_, 10);
 
-% SF Synthetic Duty Cycles
-load clust_char_SF.mat
-load clust_char_SF_vel.mat
+% Combine both into cell arrays for data selection (below)
+city_curr = {city_1_curr, city_2_curr};
+city_velo = {city_1_vel, city_2_vel};
 
-% LV Synthetic Duty Cycles
-load clust_char_LV.mat
-load clust_char_LV_vel.mat
+%% Load all synthetic duty cycles
 
-% SF + LV Synthetic Duty Cycles
-load clust_char_SF+LV.mat
-load clust_char_SF+LV_vel.mat
+% Highway Synthetic Duty Cycles (SDC 1a, SDC 1b)
+load City_1_hwy.mat
 
-% Highway Synthetic Duty Cycles
-load hwy_syn_duty_cycles.mat
-load hwy_syn_duty_cycles_vel.mat
+% City_1 Synthetic Duty Cycles (SDC 2a)
+load City_1.mat
+syn_duty_cycle_2a = [char_crate{1}; char_crate{2}];
+syn_duty_cycle_2a_vel = [char_vel{1}; char_vel{2}];
 
-% Highway Duty Cycles
-load hwy_drive_cycle.mat
-load hwy_drive_cycle_vel.mat
+% City_2 Synthetic Duty Cycle (SDC 2b)
+load City_2.mat
+syn_duty_cycle_2b = [char_crate{1}; char_crate{2}];
+syn_duty_cycle_2b_vel = [char_vel{1}; char_vel{2}];
 
-%% COMBINE ALL DUTY CYCLES INTO SYNTHETIC DUTY CYCLES
+% City_1 + City_2 Synthetic Duty Cycle (SDC 2c)
+load City_1_2_combined.mat
+syn_duty_cycle_2c = [char_crate{1}; char_crate{2}];
+syn_duty_cycle_2c_vel = [char_vel{1}; char_vel{2}];
 
-syn_duty_cycle_2a = [clust_char_SF{1}; clust_char_SF{2}];
-syn_duty_cycle_2a_vel = [clust_vel_SF{1}; clust_vel_SF{2}];
-
-syn_duty_cycle_2b = [clust_char_LV{1}; clust_char_LV{2}];
-syn_duty_cycle_2b_vel = [clust_vel_LV{1}; clust_vel_LV{2}];
-
-syn_duty_cycle_2c = [clust_char_SF_LV{1}; clust_char_SF_LV{2}];
-syn_duty_cycle_2c_vel = [clust_vel_SF_LV{1}; clust_vel_SF_LV{2}];
-
-syn_duty_cycle_3 = [clust_char_SF{1}; clust_char_SF{2}; ...
-    clust_char_LV{1}; clust_char_LV{2};... 
+% Combined duty Cycle (SDC 3)
+syn_duty_cycle_3 = [syn_duty_cycle_2a; ...
+    syn_duty_cycle_2b;... 
     syn_duty_1ab{1}];
 
-syn_duty_cycle_3_vel = [clust_vel_SF{1}; clust_vel_SF{2}; ...
-    clust_vel_LV{1}; clust_vel_LV{2};...
+syn_duty_cycle_3_vel = [syn_duty_cycle_2a_vel; ...
+    syn_duty_cycle_2b_vel;... 
     syn_duty_vel_1ab{1}];
 
+%% Compute metrics for all synthetic duty cycles
 duty_cycle_metrics_1a = metrics(syn_duty_1ab{1}, syn_duty_vel_1ab{1}, freq);
 duty_cycle_metrics_1b = metrics(syn_duty_1ab{2}, syn_duty_vel_1ab{2}, freq);
-
-
 duty_cycle_metrics_2a = metrics(syn_duty_cycle_2a, syn_duty_cycle_2a_vel, freq);
 duty_cycle_metrics_2b = metrics(syn_duty_cycle_2b, syn_duty_cycle_2b_vel, freq);
 duty_cycle_metrics_2c = metrics(syn_duty_cycle_2c, syn_duty_cycle_2c_vel, freq);
@@ -83,21 +77,9 @@ T2 = array2table([duty_cycle_metrics_1a, duty_cycle_metrics_1b, ...
     'Distance Travelled [m]', 'Average Velocity [m/s]', 'Peak Velocity [m/s]', 'Variance of velocity [m^2/s^2]', ...
     'Number of start/stops'});
 
-% T2 = array2table([SF_drive_cycle_metrics, LV_drive_cycle_metrics, SF_LV_drive_cycle_metrics, SF_syn_cycle_metrics, LV_syn_cycle_metrics, SF_LV_syn_cycle_metrics, ...
-%     hwy_duty_cycle_metrics, SF_all_syn_cycle_metrics], ...
-%     'VariableNames',{'SF Drive Cycle', 'LV Drive Cycle', ...
-%     'SF+LV Drive Cycle', 'SF Synthetic Duty Cycle', 'LV synthetic Duty Cycle', ...
-%     'SF+LV Synthetic Duty Cycle', 'Highway Synthetic Duty Cycle 1a', ...
-%     'Highway Synthetic Duty Cycle 1b', 'Combined Synthetic Duty Cycle'}, ...
-%     'RowNames',{'Peak Positive C-rate','Peak Negative C-rate', ...
-%     'Average Positive C-rate', 'Average Negative C-rate', 'Average C-rate', 'Peak Frequency, Positive C-rate [Hz]', ...
-%     'Peak Frequency, Negative C-rate [Hz]', 'Variance of Positive C-rate', 'Variance of Negative C-rate', ...
-%     'Distance Travelled [m]', 'Average Velocity [m/s]', 'Peak Velocity [m/s]', 'Variance of velocity [m^2/s^2]', ...
-%     'Number of start/stops'});
-%%
-writetable(T2, 'Summary_Syn_Duty_Cycles_v3.csv','WriteRowNames',true)   
+writetable(T2, 'Summary_Syn_Duty_Cycles.csv','WriteRowNames',true)   
 
-%% TODO: PLOT ALL SYNTHETIC DUTY CYCLES!!
+%% PLOT ALL SYNTHETIC DUTY CYCLES!
 % Highway
 hFig = figure(1);
 set(hFig, 'Position', [100 100 1000 600])
@@ -146,52 +128,21 @@ t = sgtitle('Non-Highway Duty Cycles');
 t.Interpreter = 'latex';
 t.FontSize = 24;
 
-hFig = figure();
-set(hFig, 'Position', [100 100 600 500])
-plot((1:length(syn_duty_cycle_2a))./freq/60, syn_duty_cycle_2a*2, 'color', rgb('pine green'), 'LineWidth', 2)
-title({'City 1 Synthetic Duty Cycle,' 'C/5 Average C-Rate'})
-xlabel('Time [min]')
-ylabel('Dispatch C-rate [-]')
-set(gca,'FontSize', 26)
-
-hFig = figure();
-set(hFig, 'Position', [100 100 600 500])
-plot((1:length(syn_duty_cycle_2b))./freq/60, syn_duty_cycle_2b*5, 'color', rgb('pine green'), 'LineWidth', 2)
-title({'City 2 Synthetic Duty Cycle,' 'C/2 Average C-Rate'})
-xlabel('Time [min]')
-ylabel('Dispatch C-rate [-]')
-set(gca,'FontSize', 26)
-
-% hFig = figure(2);
-% set(hFig, 'Position', [100 100 1500 600])
-% tiledlayout(1,3);
-% nexttile
-% plot((1:length(syn_duty_cycle_SF))./freq/60, syn_duty_cycle_SF, 'LineWidth', 1)
-% xlim([0, length(syn_duty_cycle_SF)/freq/60])
+% hFig = figure();
+% set(hFig, 'Position', [100 100 600 500])
+% plot((1:length(syn_duty_cycle_2a))./freq/60, syn_duty_cycle_2a*2, 'color', rgb('pine green'), 'LineWidth', 2)
+% title({'City 1 Synthetic Duty Cycle,' 'C/5 Average C-Rate'})
 % xlabel('Time [min]')
-% ylabel('C-rate [-]')
-% title('Syn. Duty Cycle 2a')
-% set(gca, 'TickLabelInterpreter','latex')
-% set(gca,'FontSize', 24)
-% nexttile
-% plot((1:length(syn_duty_cycle_LV))./freq/60, syn_duty_cycle_LV, 'LineWidth', 1)
-% xlim([0, length(syn_duty_cycle_LV)/freq/60])
+% ylabel('Dispatch C-rate [-]')
+% set(gca,'FontSize', 26)
+% 
+% hFig = figure();
+% set(hFig, 'Position', [100 100 600 500])
+% plot((1:length(syn_duty_cycle_2b))./freq/60, syn_duty_cycle_2b*5, 'color', rgb('pine green'), 'LineWidth', 2)
+% title({'City 2 Synthetic Duty Cycle,' 'C/2 Average C-Rate'})
 % xlabel('Time [min]')
-% ylabel('C-rate [-]')
-% title('Syn. Duty Cycle 2b')
-% set(gca, 'TickLabelInterpreter','latex')
-% set(gca,'FontSize', 24)
-% nexttile
-% plot((1:length(syn_duty_cycle_SF_LV))./freq/60, syn_duty_cycle_SF_LV, 'LineWidth', 1)
-% xlim([0, length(syn_duty_cycle_SF_LV)/freq/60])
-% xlabel('Time [min]')
-% ylabel('C-rate [-]')
-% title('Syn. Duty Cycle 2c')
-% set(gca, 'TickLabelInterpreter','latex')
-% set(gca,'FontSize', 24)
-% t = sgtitle('Non-Highway Duty Cycles');
-% t.Interpreter = 'latex';
-% t.FontSize = 24;
+% ylabel('Dispatch C-rate [-]')
+% set(gca,'FontSize', 26)
 
 hFig = figure(3);
 set(hFig, 'Position', [100 100 800 600])
@@ -244,214 +195,11 @@ set(gca,'TickLabelInterpreter','latex');
 ylim([0 1.05])
 xlabel('Metric', 'FontSize', 24)
 ylabel('Normalized Quantity', 'FontSize', 24)
-legend('SF Drive Cycle', 'LV Drive Cycle', 'SF+LV Drive Cycle', ...
+legend('City 1 Drive Cycle', 'City 2 Drive Cycle', 'City 1 + City 2 Drive Cycle', ...
     'Syn. Duty Cycle 1a', 'Syn. Duty Cycle 1b', 'Syn. Duty Cycle 2a', ...
     'Syn. Duty Cycle 2b', 'Syn. Duty Cycle 2c', 'Syn. Duty Cycle 3', 'Location', 'eastoutside', 'Interpreter', 'latex')
-% set(h,{'linew'},{1})
+set(h,{'linew'},{1})
 
-
-
-%% Plots
-
-reps_lv1 = floor(length(drive_cycle)/length(SF_lv1));
-
-hFig = figure(1); 
-set(hFig, 'Position', [100 100 1000 1000])
-set(0,'DefaultAxesLineStyleOrder',{'-',':'});
-tiledlayout(2,2);
-
-nexttile
-hold on
-yyaxis left
-plot(repmat(SF_lv1, reps_lv1, 1), 'LineWidth', 1)
-ylabel('Current [A]')
-ylim([-3 4.5])
-yyaxis right
-plot((Q_nom + cumtrapz(-repmat(SF_lv1, reps_lv1, 1))*0.1/3600)/Q_nom, 'LineWidth', 2)
-ylabel('SOC [-]')
-hold off
-xlabel('Time [s]')
-xlim([0 length(repmat(SF_lv1, reps_lv1, 1))])
-ylim([0 1])
-title('Level 1')
-set(gca,'FontSize', 20)
-
-nexttile
-hold on
-yyaxis left
-plot(repmat(SF_lv2, reps, 1), 'LineWidth', 1)
-ylabel('Current [A]')
-ylim([-3 4.5])
-yyaxis right
-plot((Q_nom + cumtrapz(-repmat(SF_lv2, reps, 1))*0.1/3600)/Q_nom, 'LineWidth', 2)
-ylabel('SOC [-]')
-hold off
-xlabel('Time [s]')
-xlim([0 length(repmat(SF_lv1, reps_lv1, 1))])
-ylim([0 1])
-title('Level 2')
-set(gca,'FontSize', 20)
-
-nexttile
-hold on
-yyaxis left
-plot(SF_lv2_rests, 'LineWidth', 1)
-ylabel('Current [A]')
-ylim([-3 4.5])
-yyaxis right
-plot((Q_nom + cumtrapz(-SF_lv2_rests)*0.1/3600)/Q_nom, 'LineWidth', 2)
-ylabel('SOC [-]')
-hold off
-xlabel('Time [s]')
-xlim([0 length(repmat(SF_lv1, reps_lv1, 1))])
-ylim([0 1])
-title('Level 2 with Rests')
-set(gca,'FontSize', 20)
-
-nexttile
-hold on
-yyaxis left
-plot(drive_cycle, 'LineWidth', 1)
-ylabel('Current [A]')
-ylim([-3 4.5])
-yyaxis right
-plot((Q_nom + cumtrapz(-drive_cycle)*0.1/3600)/Q_nom, 'LineWidth', 2)
-ylabel('SOC [-]')
-hold off
-xlabel('Time [s]')
-xlim([0 length(repmat(SF_lv1, reps_lv1, 1))])
-ylim([0 1])
-title('Full Drive Cycle')
-set(gca,'FontSize', 20)
-
-(Q_nom + trapz(-repmat(SF_lv1, reps_lv1, 1))*0.1/3600)/Q_nom
-(Q_nom + trapz(-repmat(SF_lv2, reps, 1))*0.1/3600)/Q_nom
-(Q_nom + trapz(-SF_lv2_rests)*0.1/3600)/Q_nom
-(Q_nom + trapz(-drive_cycle)*0.1/3600)/Q_nom
-
-hFig = figure(2); 
-set(hFig, 'Position', [100 100 1000 1000])
-set(0,'DefaultAxesLineStyleOrder',{'-',':'});
-tiledlayout(2,2);
-
-nexttile
-hold on
-plot(SF_lv1, 'LineWidth', 1)
-ylabel('Current [A]')
-ylim([-3 4.5])
-hold off
-xlabel('Time [s]')
-xlim([0 length(SF_lv1)])
-title('Level 1')
-set(gca,'FontSize', 20)
-
-nexttile
-hold on
-plot(SF_lv2, 'LineWidth', 1)
-ylabel('Current [A]')
-ylim([-3 4.5])
-hold off
-xlabel('Time [s]')
-xlim([0 length(SF_lv2)])
-title('Level 2')
-set(gca,'FontSize', 20)
-
-nexttile
-hold on
-plot(SF_lv2_rests, 'LineWidth', 1)
-ylabel('Current [A]')
-ylim([-3 4.5])
-hold off
-xlabel('Time [s]')
-xlim([0 length(SF_lv2_rests)])
-title('Level 2 with Rests')
-set(gca,'FontSize', 20)
-
-
-%% Collect all synthetic duty cycles at each C-rate
-
-C_16_avg_current = Q_nom/16;
-C_8_avg_current = Q_nom/8;
-C_2_avg_current = Q_nom/2;
-
-SF_lv1_C_16 =  C_16_avg_current/mean(SF_lv1) * SF_lv1;
-SF_lv1_C_8 =  C_8_avg_current/mean(SF_lv1) * SF_lv1;
-SF_lv1_C_2 =  C_2_avg_current/mean(SF_lv1) * SF_lv1;
-
-SF_lv2_C_16 =  C_16_avg_current/mean(SF_lv2) * SF_lv2;
-SF_lv2_C_8 =  C_8_avg_current/mean(SF_lv2) * SF_lv2;
-SF_lv2_C_2 =  C_2_avg_current/mean(SF_lv2) * SF_lv2;
-
-SF_lv2_rests_C_16 =  C_16_avg_current/mean(SF_lv2_rests) * SF_lv2_rests;
-SF_lv2_rests_C_8 =  C_8_avg_current/mean(SF_lv2_rests) * SF_lv2_rests;
-SF_lv2_rests_C_2 =  C_2_avg_current/mean(SF_lv2_rests) * SF_lv2_rests;
-
-LV_lv1_C_16 =  C_16_avg_current/mean(LV_lv1) * LV_lv1;
-LV_lv1_C_8 =  C_8_avg_current/mean(LV_lv1) * LV_lv1;
-LV_lv1_C_2 =  C_2_avg_current/mean(LV_lv1) * LV_lv1;
-
-hFig = figure(2); 
-set(hFig, 'Position', [100 100 800 800])
-set(0,'DefaultAxesLineStyleOrder',{'-',':'});
-tiledlayout(3,1);
-
-nexttile
-hold on
-plot(SF_lv1_C_2, 'LineWidth', 1)
-plot(SF_lv1_C_8, 'LineWidth', 1)
-plot(SF_lv1_C_16, 'LineWidth', 1)
-ylabel('Current [A]')
-hold off
-xlabel('Time [s]')
-xlim([0 length(SF_lv1)])
-title('Level 1')
-set(gca,'FontSize', 20)
-
-nexttile
-hold on
-plot(SF_lv2_C_2, 'LineWidth', 1)
-plot(SF_lv2_C_8, 'LineWidth', 1)
-plot(SF_lv2_C_16, 'LineWidth', 1)
-ylabel('Current [A]')
-hold off
-xlabel('Time [s]')
-xlim([0 length(SF_lv2)])
-title('Level 2')
-set(gca,'FontSize', 20)
-
-nexttile
-hold on
-plot(SF_lv2_rests_C_2, 'LineWidth', 1)
-plot(SF_lv2_rests_C_8, 'LineWidth', 1)
-plot(SF_lv2_rests_C_16, 'LineWidth', 1)
-ylabel('Current [A]')
-hold off
-xlabel('Time [s]')
-xlim([0 length(SF_lv2_rests)])
-title('Level 2 with Rests')
-set(gca,'FontSize', 20)
-
-t = sgtitle('SF Duty Cycles');
-t.Interpreter = 'latex';
-t.FontSize = 24;
-
-lg  = legend('C/2', 'C/8', 'C/16','Orientation','Vertical'); 
-lg.Layout.Tile = 'East'; % <-- Legend placement with tiled layout
-
-hFig = figure(3); 
-set(hFig, 'Position', [100 100 600 500])
-set(0,'DefaultAxesLineStyleOrder',{'-',':'});
-hold on
-plot(LV_lv1_C_2, 'LineWidth', 1)
-plot(LV_lv1_C_8, 'LineWidth', 1)
-plot(LV_lv1_C_16, 'LineWidth', 1)
-ylabel('Current [A]')
-hold off
-xlabel('Time [s]')
-xlim([0 length(SF_lv1)])
-title('LV Duty Cycle')
-set(gca,'FontSize', 20)
-lg  = legend('C/2', 'C/8', 'C/16','Orientation','Vertical', 'Location', 'eastoutside'); 
 
 %% Functions
 

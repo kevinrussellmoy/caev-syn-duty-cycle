@@ -17,7 +17,7 @@ city_2_dat = readtable("City_2_CellPowerProfile.csv");
 Q_nom = 5; % Ah, assumed
 freq = 1; % Hz
 
-% Obtain current from front pack
+% Cell current
 city_1_curr = downsample(city_1_dat.FrontCurrent_A_, 10);
 city_2_curr = downsample(city_2_dat.FrontCurrent_A_, 10);
 
@@ -26,17 +26,21 @@ city_1_vel = downsample(city_1_dat.Velocity_m_s_, 10);
 city_2_vel = downsample(city_2_dat.Velocity_m_s_, 10);
 
 % Combine both into cell arrays for data selection (below)
-
 city_curr = {city_1_curr, city_2_curr};
 city_velo = {city_1_vel, city_2_vel};
 
-%% Select drive cycle velocity, crate data
 
-% SELECT:
+%% USER SELECT:
+
+
 % 1 = City 1
 % 2 = City 2
 % 3 = City 1 and City 2 combined
 city_select = 1;
+
+
+%% Select drive cycle velocity, crate data
+
 
 drive_cycle_velo = [];
 drive_cycle_crat = [];
@@ -54,15 +58,6 @@ elseif city_select == 3
     drive_cycle_name = 'City 1+2 combined';
     drive_cycle_fn   = 'City_1_2_combined';
 end
-
-% % drive_cycle_velo = city_1_vel;
-% drive_cycle_velo = city_2_vel;
-% % drive_cycle_velo = [city_1_vel; city_2_vel];
-% 
-% % Convert current to C-rate
-% % drive_cycle_crat = city_1_curr/Q_nom;
-% drive_cycle_crat = city_2_curr/Q_nom;
-% % drive_cycle_crat = [city_1_curr; city_2_curr]/Q_nom;
 
 %% Get individual "microtrips"
 % Assume each microtrip is 30 seconds of rest (zero velocity) apart
@@ -85,7 +80,7 @@ for i = 1:length(flats)
 end
 cyc_end = [cyc_end; nf(end)];
 
-hFig = figure(2);
+hFig = figure();
 set(hFig, 'Position', [100 100 800 800])
 hold on
 plot((1:length(drive_cycle_velo))/freq/3600, drive_cycle_velo, 'LineWidth', 1)
@@ -100,7 +95,7 @@ set(gca, 'TickLabelInterpreter','latex')
 hold off
 box on
 
-hFig = figure(3);
+hFig = figure();
 set(hFig, 'Position', [100 100 800 800])
 hold on
 for i = 1:length(cyc_st)
@@ -117,7 +112,7 @@ set(gca, 'TickLabelInterpreter','latex')
 hold off
 box on
 
-hFig = figure(4);
+hFig = figure();
 set(hFig, 'Position', [100 100 800 800])
 hold on
 for i = 1:length(cyc_st)
@@ -143,7 +138,6 @@ box on
 % Set threshold for highway driving
 hwy_thresh = 20; % m/s
 
-close all
 metrics = [];
 metrics_hwy = [];
 cyc = {};
@@ -151,16 +145,6 @@ cyc_v = {};
 cyc_hwy = {};
 cyc_v_hwy = {};
 for d = 1:length(cyc_st) 
-    % - number of occurrences
-    % - hours spent (duration of) discharging
-    % - peak discharge power
-    % - average discharge power
-    % - hour starting discharge
-    % - hour ending discharge
-    % - SOC starting discharge
-    % - SOC ending discharge
-    % - Average SOC during discharge
-    % - peak frequency of discharge? (Maybe largest 3 peaks?)
     
     cycl_d = drive_cycle_crat(cyc_st(d):cyc_end(d));
     cyclv_d = drive_cycle_velo(cyc_st(d):cyc_end(d));
@@ -307,8 +291,12 @@ disp("Computation of metrics finished!")
 
 [char_crate, ~, char_vel, char_interval] = pca_k_means(metrics, cyc, cyc, cyc_v, true);
 
-%% Plotting + Average current
-% close all
+% Save to file
+fn = [drive_cycle_fn '.mat'];
+save(fn, 'char_crate', 'char_vel')
+
+%% Plotting + summary table
+close all
 % linestyle = ["-.", "-", ":"];
 
 dctable = [];
@@ -355,7 +343,7 @@ fprintf('Average Discharge Current for entire drive cycle: %4.4f \n', dctable(1,
 fprintf('Average Charge Current for entire drive cycle: %4.4f \n', dctable(1,4))
 fprintf('Average Current for entire drive cycle: %4.4f \n', mean(dcrate))
 
-hFig = figure(13);
+hFig = figure();
 set(hFig, 'Position', [100 100 1000 500])
 set(0,'DefaultAxesLineStyleOrder',{'-',':'});
 hold on
@@ -371,27 +359,21 @@ for i = 1:num_clust
 end
 box on
 
-fn = [drive_cycle_fn '.mat'];
-
-save(fn, 'char_crate', 'char_vel')
-
-
-%%
+%% Write duty cycle summary to table
 T = array2table(dctable, ...
     'VariableNames', {'Maximum Discharge Current', ...
     'Maximum Charge Current' 'Average Discharge Current', ...
     'Average Charge Current', 'Percentage of Time above Average Discharge Current', ...
     'Percentage of Time Below Average Discharge Current'}, ...
-    'RowNames', {'Drive Cycle', 'Characteristic Duty Cycle 1', ...
-    'Characteristic Duty Cycle 2', 'Characteristic Duty Cycle 3'});
+    'RowNames', [{'Drive Cycle'}; ...
+    cellstr(num2str((1:num_clust)', 'Characteristic Duty Cycle %-d'))]);
 
-%% Write to table
-% writetable(T, 'City_1_Duty_Cycle_Comparison.xls', 'WriteRowNames', true)
-% writetable(T, 'City_2_Duty_Cycle_Comparison.xls', 'WriteRowNames', true)
+fn = [drive_cycle_fn '_Duty_Cycle_Comparison.xls'];
+writetable(T, fn, 'WriteRowNames', true)
 
 %% HIGHWAY DRIVE CYCLE
 
-hFig = figure(1); 
+hFig = figure(); 
 set(hFig, 'Position', [100 100 800 1000])
 plot((1:length(highway_drive_cycle_crate))/freq/60, highway_drive_cycle_crate)
 ylabel('C-rate [-]')
@@ -409,15 +391,15 @@ hwy_rest_len = floor(sum(highway_drive_cycle_crate)/avg_crate - ...
 
 % Construct synthetic duty cycle 1a
 syn_duty_cycle_1a = [ highway_drive_cycle_crate; zeros(hwy_rest_len, 1 ) ];
-syn_duty_cycle_1a_vel = [ highway_drive_cycle_veloocity; zeros(hwy_rest_len, 1 ) ];
+syn_duty_cycle_1a_vel = [ highway_drive_cycle_velocity; zeros(hwy_rest_len, 1 ) ];
 
 % Construct synthetic duty cycle 1b
 % Parameter for number of replicates in a row
 reps = 4;
 syn_duty_cycle_1b = [repmat(highway_drive_cycle_crate, reps, 1); repmat(zeros(hwy_rest_len, 1), reps, 1)];
-syn_duty_cycle_1b_vel = [repmat(highway_drive_cycle_veloocity, reps, 1); repmat(zeros(hwy_rest_len, 1), reps, 1)];
+syn_duty_cycle_1b_vel = [repmat(highway_drive_cycle_velocity, reps, 1); repmat(zeros(hwy_rest_len, 1), reps, 1)];
 
-hFig = figure(12);
+hFig = figure();
 set(hFig, 'Position', [100 100 1000 600])
 tiledlayout(1,2);
 nexttile
@@ -441,7 +423,7 @@ t = sgtitle('Highway Duty Cycles');
 t.Interpreter = 'latex';
 t.FontSize = 24;
 
-hFig = figure(13);
+hFig = figure();
 set(hFig, 'Position', [100 100 1000 600])
 tiledlayout(1,2);
 nexttile
