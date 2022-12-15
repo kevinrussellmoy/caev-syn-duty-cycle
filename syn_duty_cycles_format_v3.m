@@ -1,5 +1,4 @@
-%% Produce synthetic duty cycle summary tables and package them for use 
-% in cyclers
+%% Produce synthetic duty cycle summary tables and format them for later use
 
 % Kevin Moy, 12/15/21
 clearvars
@@ -54,6 +53,13 @@ syn_duty_cycle_3 = [syn_duty_cycle_2a; ...
 syn_duty_cycle_3_vel = [syn_duty_cycle_2a_vel; ...
     syn_duty_cycle_2b_vel;... 
     syn_duty_vel_1ab{1}];
+
+%% Save all synthetic duty cycles
+save('syn_duty_cycles.mat', 'syn_duty_1ab', ...
+    'syn_duty_cycle_3', 'syn_duty_cycle_3_vel', ...
+    'syn_duty_cycle_2a', 'syn_duty_cycle_2b', 'syn_duty_cycle_2c', ...
+    'syn_duty_cycle_2a_vel', 'syn_duty_cycle_2b_vel', 'syn_duty_cycle_2c_vel')
+
 
 %% Compute metrics for all synthetic duty cycles
 duty_cycle_metrics_1a = metrics(syn_duty_1ab{1}, syn_duty_vel_1ab{1}, freq);
