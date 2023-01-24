@@ -4,7 +4,7 @@ Synthetic duty cycle generation from electric connected autonomous vehicle (ECAV
 General framework to run:
 1. Run syn_duty_cycle_gen.m to generate all synthetic duty cycle information
 
--- Requires City 1 and City 2 drive cycle data as City_1_CellPowerProfile.csv and City_2_CellPowerProfile.csv
+-- Requires City 1 and City 2 drive cycle data as City_1_CellPowerProfile.csv and City_2_CellPowerProfile.csv. [The actual drive cycles are not supplied here as they are confidential. Any time-series data of velocity and battery current will do.]
 
 -- User must select value for city_select to select City (1), City (2), or (3) City 1 and 2 combined.
 
