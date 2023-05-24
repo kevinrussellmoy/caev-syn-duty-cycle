@@ -1,5 +1,5 @@
 # ecav-syn-duty-cycle
-Synthetic duty cycle generation from electric connected autonomous vehicle (ECAV) driving data.
+Synthetic duty cycle generation from electric connected autonomous vehicle (EC/AV) driving data.
 
 General framework to run:
 1. Run syn_duty_cycle_gen.m to generate all synthetic duty cycle information
