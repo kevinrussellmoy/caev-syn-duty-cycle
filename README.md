@@ -1,4 +1,4 @@
-# ecav-syn-duty-cycle
+# caev-syn-duty-cycle
 Synthetic duty cycle generation from electric connected autonomous vehicle (EC/AV) driving data.
 
 General framework to run:
