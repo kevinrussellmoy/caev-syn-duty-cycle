@@ -7,7 +7,7 @@ set(0,'defaultTextInterpreter','latex');
 
 city_1_dat = readtable("City_1_CellPowerProfile.csv");
 city_2_dat = readtable("City_2_CellPowerProfile.csv");
-Q_nom = 5; % Ah... from Zoox slides??
+Q_nom = 5; % Ah, assumed
 freq = 10; % Hz
 
 % Assume current from front pack
