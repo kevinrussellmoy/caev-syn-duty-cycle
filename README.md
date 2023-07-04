@@ -1,5 +1,5 @@
 # caev-syn-duty-cycle
-Synthetic duty cycle generation from electric connected autonomous vehicle (C/AEV) driving data.
+Synthetic duty cycle generation from connected electric autonomous vehicle (C/AEV) driving data.
 
 General framework to run:
 1. Run syn_duty_cycle_gen.m to generate all synthetic duty cycle information
@@ -20,7 +20,7 @@ General framework to run:
 
 -- Requires City 1 and City 2 drive cycle data as City_1_CellPowerProfile.csv and City_2_CellPowerProfile.csv
 
-3. Comparison between C/AEV driving and real-world electric vehicle driving
+3. Run comp_ECAV_EV for comparison between C/AEV driving and real-world electric vehicle driving
 
 -- Requires City 1 and City 2 drive cycle data as City_1_CellPowerProfile.csv and City_2_CellPowerProfile.csv. [The actual drive cycles are not supplied here as they are confidential. Any time-series data of velocity and battery current will do.]
 
