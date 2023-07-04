@@ -1,0 +1,9 @@
+cff-version: 1.1.0
+message: "If you use this software, please cite it as below."
+authors:
+  - family-names: Kevin
+    given-names: Moy
+    orcid: https://orcid.org/0000-0002-3476-408X
+title: kevinrussellmoy/caev-syn-duty-cycle: C/AEV Synthetic Duty Cycle Generation - release v1
+version: CRPS-v1
+date-released: 2023-07-04
