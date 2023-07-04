@@ -22,4 +22,4 @@ General framework to run:
 
 3. Comparison between C/AEV driving and real-world electric vehicle driving
 
--- Requires downloading Vehicle Energy Dataset (under \Data in [https://github.com/gsoh/VED/](https://github.com/gsoh/VED))
+-- Requires downloading Vehicle Energy Dataset Dynamic Data (under \Data in [https://github.com/gsoh/VED/](https://github.com/gsoh/VED))
