@@ -1,5 +1,5 @@
 # caev-syn-duty-cycle
-Synthetic duty cycle generation from connected electric autonomous vehicle (C/AEV) driving data.
+Synthetic duty cycle generation from connected autonomous electric vehicle (C/AEV) driving data.
 
 General framework to run:
 1. Run syn_duty_cycle_gen.m to generate all synthetic duty cycle information
