@@ -22,4 +22,6 @@ General framework to run:
 
 3. Comparison between C/AEV driving and real-world electric vehicle driving
 
+-- Requires City 1 and City 2 drive cycle data as City_1_CellPowerProfile.csv and City_2_CellPowerProfile.csv. [The actual drive cycles are not supplied here as they are confidential. Any time-series data of velocity and battery current will do.]
+
 -- Requires downloading Vehicle Energy Dataset Dynamic Data (under \Data in [https://github.com/gsoh/VED/](https://github.com/gsoh/VED))
